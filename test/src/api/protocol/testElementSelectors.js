@@ -450,6 +450,10 @@ module.exports = MochaTest.add('test element selectors', {
         assert.equal(result.status, 0, 'element indexed found');
         assert.equal(result.value, 'second', 'element indexed value');
       })
+      .getText({selector:'@loginIndexed', index:0}, function callback(result) {
+        assert.equal(result.status, 0, 'element indexed overridden found');
+        assert.equal(result.value, 'first', 'element indexed overridden value');
+      })
       .getText({selector:'@loginCss', locateStrategy:'xpath'}, function callback(result) {
         assert.equal(result.status, -1, 'element selector css xpath override not found');
       })
