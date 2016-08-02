@@ -446,6 +446,10 @@ module.exports = MochaTest.add('test element selectors', {
         assert.equal(result.status, 0, 'element selector css found');
         assert.equal(result.value, 'first', 'element selector css value');
       })
+      .getText('@loginIndexed', function callback(result) {
+        assert.equal(result.status, 0, 'element indexed found');
+        assert.equal(result.value, 'second', 'element indexed value');
+      })
       .getText({selector:'@loginCss', locateStrategy:'xpath'}, function callback(result) {
         assert.equal(result.status, -1, 'element selector css xpath override not found');
       })
@@ -516,6 +520,67 @@ module.exports = MochaTest.add('test element selectors', {
       .api.perform(function() {
         done();
       });
+
+    Nightwatch.start();
+  },
+
+  'expect selectors' : function (done) {
+    nocks
+      .elementsFound()
+      .elementsFound('#signupSection', [{ELEMENT: '0'}])
+      .elementsId(0, '#helpBtn', [{ELEMENT: '0'}])
+      .elementsByXpath();
+
+    var client = Nightwatch.client();
+    Api.init(client);
+    var api = client.api;
+    api.globals.abortOnAssertionFailure = false;
+
+    var page = api.page.simplePageObj();
+    var section = page.section.signUp;
+
+    var passes = [
+      api.expect.element('.nock').to.be.present.before(1),
+      api.expect.element({selector: '.nock'}).to.be.present.before(1),
+      api.expect.element({selector: '//[@class="nock"]', locateStrategy: 'xpath'}).to.be.present.before(1),
+      api.expect.element({selector: '.nock', index: 2}).to.be.present.before(1),
+      page.expect.section('@signUp').to.be.present.before(1),
+      page.expect.section({selector: '@signUp', locateStrategy: 'css selector'}).to.be.present.before(1),
+      section.expect.element('@help').to.be.present.before(1),
+      section.expect.element({selector: '@help', index: 0}).to.be.present.before(1)
+    ];
+
+    var fails = [
+      [api.expect.element({selector: '.nock', locateStrategy: 'xpath'}).to.be.present.before(1),
+        'element was not found'],
+      [api.expect.element({selector: '.nock', index: 999}).to.be.present.before(1),
+        'element was not found'],
+      [page.expect.section({selector: '@signUp', locateStrategy: 'xpath'}).to.be.present.before(1),
+        'element was not found'],
+      [section.expect.element({selector: '@help', index: 999}).to.be.present.before(1),
+        'element was not found']
+    ];
+
+    api.perform(function(performDone) {
+      process.nextTick(function(){ // keep assertions from being swallowed by perform
+
+        passes.forEach(function(expect, index) {
+          assert.equal(expect.assertion.passed, true, 'passing [' + index + ']: ' + expect.assertion.message);
+        });
+
+        fails.forEach(function(expectArr, index) {
+          var expect = expectArr[0];
+          var msgPartial = expectArr[1];
+
+          assert.equal(expect.assertion.passed, false, 'failing [' + index + ']: ' + expect.assertion.message);
+          assert.notEqual(expect.assertion.message.indexOf(msgPartial), -1, 'Message contains: ' + msgPartial);
+        });
+        
+        performDone();
+        done();
+
+      });
+    });
 
     Nightwatch.start();
   }
