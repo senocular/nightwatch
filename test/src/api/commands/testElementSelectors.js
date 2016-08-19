@@ -40,8 +40,17 @@ module.exports = MochaTest.add('test element selectors', {
         assert.equal(result.status, -1, 'getText not found status');
         assert.equal(result.value.length, 0, 'No results for getText selector');
       })
+      .getText({selector: '.nock', index: 1}, function callback(result) {
+        assert.equal(result.value, 'second', 'getText index 1');
+      })
       .getText({selector: '//[@class="nock"]', locateStrategy: 'xpath'}, function callback(result) {
         assert.equal(result.value, 'first', 'getText xpath locateStrategy');
+      })
+      .getText({selector: '//[@class="nock"]', locateStrategy: 'xpath', index: 1}, function callback(result) {
+        assert.equal(result.value, 'second', 'getText xpath locateStrategy index 1');
+      })
+      .getText({selector: '//[@class="nock"]', locateStrategy: 'xpath', index: 999}, function callback(result) {
+        assert.equal(result.status, -1, 'getText xpath locateStrategy out of range index');
       })
       .perform(function() {
         done();
@@ -102,6 +111,13 @@ module.exports = MochaTest.add('test element selectors', {
       .waitForElementPresent({selector: '.nock-none'}, 1, false, function callback(result) {
         assert.equal(result.value, false, 'waitforPresent selector property result expected false');
       })
+      .waitForElementPresent({selector: '.nock', index: 1}, 1, false, function callback(result) {
+        assert.equal(result.value.length, 1, 'waitforPresent index has results');
+        assert.equal(result.value[0].ELEMENT, '1', 'waitforPresent found element 1');
+      })
+      .waitForElementPresent({selector: '.nock', index: 999}, 1, false, function callback(result) {
+        assert.equal(result.value, false, 'waitforPresent out of bounds index expected false');
+      })
       .perform(function() {
         done();
       });
@@ -127,6 +143,10 @@ module.exports = MochaTest.add('test element selectors', {
       .useCss()
       .waitForElementPresent({selector: '//[@class="nock"]', locateStrategy: 'xpath'}, 1, false, function callback(result) {
         assert.equal(result.value.length, 3, 'waitforPresent locateStrategy override to xpath found');
+      })
+      .waitForElementPresent({selector: '.nock', index: 1}, 1, false, function callback(result) {
+        assert.equal(result.value.length, 1, 'waitforPresent back to css index has results');
+        assert.equal(result.value[0].ELEMENT, '1', 'waitforPresent found element 1');
       })
       .perform(function() {
         done();

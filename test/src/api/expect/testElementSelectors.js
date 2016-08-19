@@ -38,15 +38,21 @@ module.exports = MochaTest.add('test element selectors', {
       api.expect.element('.nock').to.be.present.before(1),
       api.expect.element({selector: '.nock'}).to.be.present.before(1),
       api.expect.element({selector: '//[@class="nock"]', locateStrategy: 'xpath'}).to.be.present.before(1),
+      api.expect.element({selector: '.nock', index: 2}).to.be.present.before(1),
       page.expect.section('@signUp').to.be.present.before(1),
       page.expect.section({selector: '@signUp', locateStrategy: 'css selector'}).to.be.present.before(1),
-      section.expect.element('@help').to.be.present.before(1)
+      section.expect.element('@help').to.be.present.before(1),
+      section.expect.element({selector: '@help', index: 0}).to.be.present.before(1)
     ];
 
     var fails = [
       [api.expect.element({selector: '.nock', locateStrategy: 'xpath'}).to.be.present.before(1),
         'element was not found'],
+      [api.expect.element({selector: '.nock', index: 999}).to.be.present.before(1),
+        'element was not found'],
       [page.expect.section({selector: '@signUp', locateStrategy: 'xpath'}).to.be.present.before(1),
+        'element was not found'],
+      [section.expect.element({selector: '@help', index: 999}).to.be.present.before(1),
         'element was not found']
     ];
 

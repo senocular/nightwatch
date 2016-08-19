@@ -124,6 +124,23 @@ module.exports = MochaTest.add('test element selectors', {
     Nightwatch.start();
   },
 
+  'protocol.element(using, {selector, index})' : function(done) {
+    nocks.elementFound();
+
+    Nightwatch.api()
+      .element('css selector', {selector: '#nock', index: 0}, function callback(result) {
+        assert.equal(result.value.ELEMENT, '0', 'Found element, 0 index ignored');
+      })
+      .element('css selector', {selector: '#nock', index: 1}, function callback(result) {
+        assert.equal(result.value.ELEMENT, '0', 'Found element, 1 index ignored');
+      })
+      .perform(function() {
+        done();
+      });
+
+    Nightwatch.start();
+  },
+
   'protocol.elements(using, {selector})' : function(done) {
     nocks
       .elementsFound()
@@ -234,6 +251,33 @@ module.exports = MochaTest.add('test element selectors', {
       });
 
     Nightwatch.start();
-  }
+  },
+
+  'protocol.elements(using, {selector, index})' : function(done) {
+    nocks.elementsFound();
+
+    Nightwatch.api()
+      .elements('css selector', {selector: '.nock', index: 0}, function callback(result) {
+        assert.equal(result.value.length, 1, 'found index, one element');
+        assert.equal(result.value[0].ELEMENT, '0', 'Found element 0');
+      })
+      .elements('css selector', {selector: '.nock', index: 1}, function callback(result) {
+        assert.equal(result.value.length, 1, 'found index, one element');
+        assert.equal(result.value[0].ELEMENT, '1', 'Found element 1');
+      })
+      .elements('css selector', {selector: '.nock', index: 2}, function callback(result) {
+        assert.equal(result.value.length, 1, 'found index, one element');
+        assert.equal(result.value[0].ELEMENT, '2', 'Found element 2');
+      })
+      .elements('css selector', {selector: '.nock', index: 999}, function callback(result) {
+        assert.equal(result.value.length, 3, 'Out of range index, keep elements query result');
+        assert.equal(result.status, -1, 'Not found for out of range index');
+      })
+      .perform(function() {
+        done();
+      });
+
+    Nightwatch.start();
+  },
 
 });

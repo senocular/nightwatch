@@ -49,6 +49,24 @@ module.exports = MochaTest.add('test element selectors', {
         assert.equal(result.status, 0, 'element selector css found');
         assert.equal(result.value, 'first', 'element selector css value');
       })
+      .getText('@loginIndexed', function callback(result) {
+        assert.equal(result.status, 0, 'element indexed found');
+        assert.equal(result.value, 'second', 'element indexed value');
+      })
+      .getText({selector:'@loginIndexed', index:0}, function callback(result) {
+        assert.equal(result.status, 0, 'element indexed overridden found');
+        assert.equal(result.value, 'first', 'element indexed overridden value');
+      })
+      .getText({selector:'@loginCss', locateStrategy:'xpath'}, function callback(result) {
+        assert.equal(result.status, -1, 'element selector css xpath override not found');
+      })
+      .getText({selector:'@loginCss', index: 1}, function callback(result) {
+        assert.equal(result.status, 0, 'element selector index 1 found');
+        assert.equal(result.value, 'second', 'element selector index 1 value');
+      })
+      .getText({selector:'@loginCss', index: 999}, function callback(result) {
+        assert.equal(result.status, -1, 'element selector index out of bounds not found');
+      })
       .api.perform(function() {
         done();
       });
@@ -84,6 +102,13 @@ module.exports = MochaTest.add('test element selectors', {
       })
       .getText({selector:'@help', locateStrategy:'xpath'}, function callback(result) {
         assert.equal(result.status, -1, 'section element selector css xpath override not found');
+      })
+      .getText({selector:'@help', index: 1}, function callback(result) {
+        assert.equal(result.status, 0, 'section element selector index 1 found');
+        assert.equal(result.value, 'second', 'section element selector index 1 value');
+      })
+      .getText({selector:'@help', index: 999}, function callback(result) {
+        assert.equal(result.status, -1, 'section element selector index out of bounds not found');
       });
 
     sectionChild
@@ -94,6 +119,10 @@ module.exports = MochaTest.add('test element selectors', {
       .getText({selector: '#helpBtn'}, function callback(result) {
         assert.equal(result.status, 0, 'child section element selector property found');
         assert.equal(result.value, 'first', 'child section element selector property value');
+      })
+      .getText({selector:'#helpBtn', index: 1}, function callback(result) {
+        assert.equal(result.status, 0, 'child section element selector index 1 found');
+        assert.equal(result.value, 'second', 'child section element selector index 1 value');
       })
       .api.perform(function() {
         done();
