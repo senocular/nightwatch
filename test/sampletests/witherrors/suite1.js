@@ -1,11 +1,11 @@
 module.exports = {
 
-  'test1': function (browser) {
-    browser.globals.errorTesting.runTest('test1', browser);
+  'testcase1': function (browser) {
+    browser.globals.errorTesting.runTest(browser);
   },
 
-  'test2': function (browser) {
-    browser.globals.errorTesting.runTest('test2', browser);
+  'testcase2': function (browser) {
+    browser.globals.errorTesting.runTest(browser);
   },
 
   before: function (browser, done) {

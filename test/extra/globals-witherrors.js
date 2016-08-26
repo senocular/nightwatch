@@ -3,8 +3,9 @@ module.exports = {
 
   errorTesting: {
     errorTimeout: 50,
-    output: true,
-    history: [],
+    output: false,
+    history: [], // list of full names of methods run in the test run, e.g. suite.beforeEach
+    testcases: {}, // map of currentTest objects for each test case keyed by full name
 
     // meta:
     contexts: ['global', 'suite', 'test'],
@@ -14,33 +15,34 @@ module.exports = {
     errors:   ['throw', 'assert', 'verify', 'expect', 'done'], // ignored for 'timeout'
                                                                // only 'throw' supported for global.before, global.after
 
-    /* To determine what error to test:
+    /* To determine what error to test (array of these objects also works):
     test: {
       context: 'global',
       hook:    'beforeEach',
       timing:  'async',
-      error:   'throw'
+      error:   'throw',
+      count:   1 // when matches multiple, number of times to invoke an error
     }
     */
 
     runHook: function (context, name, browser, done) {
 
-      var isTestMatch = this.isTestMatch(context, name);
-      this.errorLogging(context + '.' + name, isTestMatch);
+      var test = this.findMatchingTest(context, name);
+      this.log(context, name, test);
 
-      if (isTestMatch) {
+      if (test) {
 
-        switch (this.test.timing) {
+        switch (test.timing) {
         case 'timeout':
           return;
 
         case 'sync':
-          this.generateError(browser, done);
+          this.generateError(test, browser, done);
           return;
 
         case 'async':
           setTimeout(function(){
-            this.generateError(browser, done);
+            this.generateError(test, browser, done);
           }.bind(this), this.errorTimeout);
           return;
         }
@@ -49,29 +51,31 @@ module.exports = {
       done();
     },
 
-    runTest: function (name, browser) {
+    runTest: function (browser) {
 
-      var context = 'test';
-      var isTestMatch = this.isTestMatch(context, name);
-      this.errorLogging(context + '.' + name, isTestMatch);
+      var currentTest = browser.currentTest;
+      var context = currentTest.module;
+      var name = currentTest.name;
+      var test = this.findMatchingTest(context, name);
+      this.log(context, name, test, currentTest);
 
-      if (isTestMatch) {
+      if (test) {
 
-        switch (this.test.timing) {
+        switch (test.timing) {
         case 'timeout':
           browser.perform(function(browser, done) {
-            // TODO: test timeouts supported?
+            // TODO: test timeouts supported? they hang indefinitely; expected?
           });
           return;
 
         case 'sync':
-          this.generateError(browser);
+          this.generateError(test, browser);
           return;
 
         case 'async':
           browser.perform(function(_browser, done) {
             setTimeout(function(){
-              this.generateError(browser, done);
+              this.generateError(test, browser, done);
             }.bind(this), this.errorTimeout);
           }.bind(this));
           return;
@@ -79,38 +83,80 @@ module.exports = {
       }
     },
 
-    isTestMatch: function (context, name) {
-      if (!this.test || !context || !name) {
+    findMatchingTest: function (context, name) {
+
+      var test = this.test;
+
+      if (!test || !context || !name) {
         return false;
       }
 
-      if (context === this.test.context && name === this.test.name) {
+      if (!Array.isArray(test)) {
+        test = [test];
+      }
+
+      var matchingTests = test.filter(function(test){
+        return this.findMatchingTestSingle(test, context, name);
+      }.bind(this));
+
+      return matchingTests.length > 0 ? matchingTests[0] : null;
+    },
+
+    findMatchingTestSingle: function (test, context, name) {
+
+      if (!test) {
+        return false;
+      }
+
+      if (test.count === 0) {
+        return false;
+      }
+
+      if (context === test.context && name === test.name) {
+
+        if (test.count && test.count > 0) {
+          var fullName = this.getFullName(context, name);
+          var occurs = this.history.filter(function(name) { return name === fullName; }).length;
+          if (occurs >= test.count) {
+            return false;
+          }
+        }
+
         return true;
       }
 
       return false;
     },
 
-    errorLogging: function (qualifiedName, isTestMatch) {
+    log: function (context, name, test, currentTest) {
 
-      this.history.push(qualifiedName);
+      var fullName = this.getFullName(context, name);
+      this.history.push(fullName);
+
+      if (currentTest) {
+        this.testcases[fullName] = currentTest;
+      }
 
       if (this.output) {
 
-        var msg = ('=== In ' + qualifiedName).toUpperCase();
-        if (isTestMatch) {
-          msg += ' testing: ' + JSON.stringify(this.test);
+        var msg = ('=== @ ' + fullName);
+        if (test) {
+          msg += ' Matches: ' + JSON.stringify(test);
         }
         console.log(msg);
       }
     },
 
-    generateError: function(browser, done) {
+    getFullName: function(context, name) {
+      return context + '.' + name;
+    },
 
-      var testStr = JSON.stringify(this.test);
+    generateError: function(test, browser, done) {
+
+      var testStr = JSON.stringify(test);
       var doneErr;
 
-      switch (this.test.error) {
+      switch (test.error) {
       case 'throw':
         throw new Error('Message thrown for ' + testStr + '.');
 
