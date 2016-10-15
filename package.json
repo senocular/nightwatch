@@ -52,7 +52,7 @@
     "jshint": "./node_modules/.bin/jshint --verbose --config .jshintrc lib/",
     "mocha-coverage": "jscoverage lib --exclude *.ejs,*.json && NIGHTWATCH_COV=1 ./node_modules/.bin/mocha test/src --reporter html-cov > coverage.html",
     "mocha-lcov-coverage": "jscoverage lib --exclude *.ejs,*.json && NIGHTWATCH_COV=1 ./node_modules/.bin/mocha test/src --reporter mocha-lcov-reporter > lib-cov/coverage.lcov",
-    "test": "./node_modules/.bin/mocha test/src",
+    "test": "./node_modules/.bin/mocha test/src/runner/testRunErrors.js",
     "unit-tests": "./bin/nightwatch -c test/nightwatch.json"
   },
   "files": [
